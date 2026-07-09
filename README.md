@@ -39,12 +39,10 @@ step. `npm test` also verifies formatting and linting.
 
 ## Publishing
 
-The package is configured as a public package. After logging in to the npm
-account that owns the `@philvr` scope, publish it with:
+Releases are managed by [Release Please](https://github.com/googleapis/release-please).
+Pushes to `main` create or update a release pull request based on
+[Conventional Commits](https://www.conventionalcommits.org/). Merging that pull
+request creates a GitHub release and publishes the package to npm.
 
-```bash
-npm publish
-```
-
-If that is not your npm scope, update the `name`, installation commands, and
-the publish instructions before publishing.
+For publishing, add an `NPM_TOKEN` repository secret for the npm account that
+owns the `@philvr` scope. The package is configured as public.
