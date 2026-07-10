@@ -42,7 +42,7 @@ step. `npm test` also verifies formatting and linting.
 Releases are managed by [Release Please](https://github.com/googleapis/release-please).
 Pushes to `main` create or update a release pull request based on
 [Conventional Commits](https://www.conventionalcommits.org/). Merging that pull
-request creates a GitHub release and publishes the package to npm.
+request creates a GitHub release, then invokes the npm publishing workflow.
 
 For publishing, add an `NPM_TOKEN` repository secret for the npm account that
 owns the `@philvr` scope. The package is configured as public.
