@@ -1,5 +1,7 @@
 # @philvr/pi-model-info
 
+[![npm version](https://img.shields.io/npm/v/%40philvr%2Fpi-model-info.svg)](https://www.npmjs.com/package/@philvr/pi-model-info)
+
 A [Pi](https://github.com/earendil-works/pi) package that exposes the active
 model and thinking level to Pi users and agents.
 
