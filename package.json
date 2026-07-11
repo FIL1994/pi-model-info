@@ -2,6 +2,10 @@
   "name": "@philvr/pi-model-info",
   "version": "0.1.0",
   "description": "A Pi extension that reports the active model and thinking level.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FIL1994/pi-model-info.git"
+  },
   "keywords": [
     "model",
     "pi",
