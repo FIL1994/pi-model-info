@@ -10,27 +10,13 @@ function getModelInfo(pi: ExtensionAPI, ctx: ExtensionContext) {
           provider: model.provider,
           id: model.id,
           name: model.name,
-          api: model.api,
-          reasoning: model.reasoning,
         }
       : null,
     thinkingLevel: pi.getThinkingLevel(),
   };
 }
 
-function updateStatus(pi: ExtensionAPI, ctx: ExtensionContext) {
-  const model = ctx.model;
-  ctx.ui.setStatus(
-    "model-info",
-    model ? `${model.provider}/${model.id} · ${pi.getThinkingLevel()}` : "No model selected",
-  );
-}
-
 export default function (pi: ExtensionAPI) {
-  pi.on("session_start", (_event, ctx) => updateStatus(pi, ctx));
-  pi.on("model_select", (_event, ctx) => updateStatus(pi, ctx));
-  pi.on("thinking_level_select", (_event, ctx) => updateStatus(pi, ctx));
-
   pi.registerCommand("model-info", {
     description: "Show the active model and thinking level",
     handler: async (_args, ctx) => {

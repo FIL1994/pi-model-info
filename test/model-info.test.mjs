@@ -9,16 +9,17 @@ const model = {
   api: "openai-responses",
   reasoning: true,
 };
+const basicModel = { provider: "openai", id: "gpt-5", name: "GPT-5" };
 
 function createExtensionHarness() {
   const handlers = new Map();
-  const statuses = [];
   const notifications = [];
   let command;
   let tool;
+  let thinkingLevel = "high";
 
   const pi = {
-    getThinkingLevel: () => "high",
+    getThinkingLevel: () => thinkingLevel,
     on: (event, handler) => handlers.set(event, handler),
     registerCommand: (name, definition) => {
       command = { name, definition };
@@ -31,37 +32,39 @@ function createExtensionHarness() {
   const context = (activeModel = model) => ({
     model: activeModel,
     ui: {
-      setStatus: (key, text) => statuses.push({ key, text }),
       notify: (text, level) => notifications.push({ text, level }),
     },
   });
 
   modelInfoExtension(pi);
 
-  return { command, context, handlers, notifications, statuses, tool };
+  return {
+    command,
+    context,
+    handlers,
+    notifications,
+    tool,
+    setThinkingLevel: (level) => {
+      thinkingLevel = level;
+    },
+  };
 }
 
-test("registers Pi events, command, and tool", () => {
+test("registers only the command and tool, without footer event handlers", () => {
   const { command, handlers, tool } = createExtensionHarness();
 
-  assert.deepEqual(
-    [...handlers.keys()],
-    ["session_start", "model_select", "thinking_level_select"],
-  );
+  assert.equal(handlers.size, 0);
   assert.equal(command.name, "model-info");
   assert.equal(tool.name, "model_info");
   assert.equal(tool.promptSnippet, "Show the active Pi model and thinking level");
 });
 
-test("reports model information and updates the status", async () => {
-  const { command, context, handlers, notifications, statuses, tool } = createExtensionHarness();
+test("reports only basic model information", async () => {
+  const { command, context, notifications, tool } = createExtensionHarness();
   const activeContext = context();
 
-  handlers.get("session_start")({}, activeContext);
-  assert.deepEqual(statuses, [{ key: "model-info", text: "openai/gpt-5 · high" }]);
-
   const result = await tool.execute("call-1", {}, undefined, undefined, activeContext);
-  assert.deepEqual(result.details, { model, thinkingLevel: "high" });
+  assert.deepEqual(result.details, { model: basicModel, thinkingLevel: "high" });
   assert.equal(result.content[0].text, JSON.stringify(result.details, null, 2));
 
   await command.definition.handler("", activeContext);
@@ -70,9 +73,51 @@ test("reports model information and updates the status", async () => {
   ]);
 });
 
-test("handles the absence of a selected model", () => {
-  const { context, handlers, statuses } = createExtensionHarness();
+test("refreshes all outputs after switching models", async () => {
+  const { command, context, notifications, tool, setThinkingLevel } = createExtensionHarness();
+  const activeContext = context();
+  await tool.execute("call-before-switch", {}, undefined, undefined, activeContext);
+  await command.definition.handler("", activeContext);
 
-  handlers.get("model_select")({}, context(null));
-  assert.deepEqual(statuses, [{ key: "model-info", text: "No model selected" }]);
+  const nextModel = { ...model, provider: "custom", id: "other", name: "Other", reasoning: false };
+  activeContext.model = nextModel;
+  setThinkingLevel("off");
+  const expected = {
+    model: { provider: "custom", id: "other", name: "Other" },
+    thinkingLevel: "off",
+  };
+  const result = await tool.execute("call-2", {}, undefined, undefined, activeContext);
+  assert.deepEqual(result.details, expected);
+  assert.deepEqual(JSON.parse(result.content[0].text), expected);
+  await command.definition.handler("", activeContext);
+  assert.deepEqual(JSON.parse(notifications.at(-1).text), expected);
 });
+
+test("refreshes all outputs as thinking level changes", async () => {
+  const { command, context, notifications, tool, setThinkingLevel } = createExtensionHarness();
+  const activeContext = context();
+
+  for (const level of ["off", "minimal", "low", "medium", "high", "xhigh", "max"]) {
+    setThinkingLevel(level);
+    const expected = { model: basicModel, thinkingLevel: level };
+    const result = await tool.execute("call-3", {}, undefined, undefined, activeContext);
+    assert.deepEqual(result.details, expected);
+    assert.deepEqual(JSON.parse(result.content[0].text), expected);
+    await command.definition.handler("", activeContext);
+    assert.deepEqual(JSON.parse(notifications.at(-1).text), expected);
+  }
+});
+
+for (const missingModel of [null, undefined]) {
+  test(`handles a missing model (${missingModel}) in the command and tool`, async () => {
+    const { command, context, notifications, tool } = createExtensionHarness();
+    const activeContext = { ...context(), model: missingModel };
+
+    const expected = { model: null, thinkingLevel: "high" };
+    const result = await tool.execute("call-4", {}, undefined, undefined, activeContext);
+    assert.deepEqual(result.details, expected);
+    assert.deepEqual(JSON.parse(result.content[0].text), expected);
+    await command.definition.handler("", activeContext);
+    assert.deepEqual(notifications, [{ text: JSON.stringify(expected, null, 2), level: "info" }]);
+  });
+}

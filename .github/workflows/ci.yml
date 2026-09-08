@@ -28,3 +28,6 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+      - name: Test installed package
+        run: npm run test:package

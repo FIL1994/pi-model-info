@@ -21,10 +21,12 @@ pi install -l npm:@philvr/pi-model-info
 
 ## What it adds
 
-- `/model-info` — shows the selected provider, model ID, model metadata, and
+- `/model-info` — shows the selected provider, model ID/name, and
   thinking level.
 - `model_info` — lets the agent retrieve that same information.
-- A footer status item showing the active model and thinking level.
+
+Information is retrieved on demand. Pi already shows the selected model in its
+footer, so this extension does not add another status item.
 
 ## Development
 
@@ -38,6 +40,12 @@ pi -e ./extensions/model-info.ts
 
 Pi loads TypeScript extensions directly, so this package does not need a build
 step. `npm test` also verifies formatting and linting.
+
+Run `npm run test:package` for the fresh-install smoke test used in CI. It packs
+the package, installs it with production dependencies into a temporary directory,
+and verifies that Pi discovers and loads its command and tool.
+This requires npm registry access but no API credentials or LLM requests. The
+temporary directory is removed afterward.
 
 ## Publishing
 
