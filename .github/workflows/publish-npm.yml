@@ -35,7 +35,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run checks
+        run: |
+          npm test
+          npm run test:package
+          npm run test:git
+          npm run pack:check
+
       - name: Publish package
-        run: npm publish --provenance
+        run: npm publish --ignore-scripts --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

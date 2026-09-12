@@ -14,17 +14,15 @@ import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const manifest = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
-const npm = process.env.npm_execpath;
-if (!npm) throw new Error("Run this test with npm run test:package");
 const consumer = mkdtempSync(join(tmpdir(), "pi-model-info-smoke-"));
 
 function runNpm(args, cwd) {
-  return execFileSync(process.execPath, [npm, ...args], {
+  return execFileSync("npm", args, {
     cwd,
     encoding: "utf8",
     timeout: 180_000,
     stdio: ["ignore", "pipe", "inherit"],
-    env: { ...process.env, LEFTHOOK: "0" },
+    env: { ...process.env, LEFTHOOK: "0", npm_config_dry_run: "false" },
   });
 }
 
